@@ -1,31 +1,52 @@
-# Debian_ISO-AG
+# Debian Worktop ISO Builder
 
-The build-debian-worktop-iso.sh script is ready. It creates a custom Debian 13 (Trixie) ISO containing your specialized installer and runtime environment.
+A fully automated bash script to generate a high-performance, minimal GNOME Debian Live ISO (Trixie/13) engineered specifically for **Toram** (Run-from-RAM) execution and encrypted overlay persistence.
 
-Key Features
+## 🚀 Features
+- **Toram First:** The entire base system loads into RAM on boot, delivering near-instant application load times and drastically reducing disk I/O.
+- **Fast Clone Installer:** Includes a built-in interactive fast clone installer (`install-worktop`) to rapidly deploy the Live Base to local NVMe/SSD/HDD drives.
+- **Encrypted Persistence:** Fully automated 5-minute background syncs for your persistent changes, shielded behind a LUKS2 encrypted partition.
+- **Atomic Base Upgrades:** The `update-worktop` utility lets you confidently bake active updates and app installations on the live system directly into a brand new immutable Base System on disk—featuring atomic swap protection so you can never brick your system on power loss.
 
-High-Performance Toram Mode: The system boots entirely into RAM.
-Encrypted Persistence: A custom "Sync Engine" runs every 5 minutes (and on shutdown) to copy changes from the RAM overlay to your LUKS-encrypted partition.
-Hybrid Boot: The installer sets up GRUB with two modes:
-Debian Base: Standard persistent installation on /dev/sdX3.
-Debian Toram: RAM-based mode booting from /dev/sdX2.
-Auto-Updates: The update-toram script (installed to /usr/local/bin/update-toram) regenerates the live image from your Base system and adds entries for all installed kernels to the GRUB menu.
-Instructions
+## 📋 Prerequisites
+To build the ISO, your host system must run Debian/Ubuntu (as `root`) and have the following packages installed:
+```bash
+sudo apt-get install mmdebstrap xorriso squashfs-tools mtools grub-efi-amd64-bin grub-pc-bin dosfstools
+```
 
-Install Build Dependencies: You need a Debian/Ubuntu host to build the ISO.
-1 sudo apt update 2 sudo apt install mmdebstrap xorriso squashfs-tools parted cryptsetup mtools grub-common dosfstools
+## 🛠️ Building the ISO
+1. Open the script `Debian-toram.sh`.
+2. Edit the `LIVE_USER="your_username"` configuration variable at the top.
+3. Run the builder as root:
+```bash
+sudo ./Debian-toram.sh
+```
+The resulting bootable image will be compiled in the `./worktop-build/` directory as `debian-worktop-13-live.iso`.
 
-Build the ISO: Run the script as root. 1 sudo ./build-debian-worktop-iso.sh This will produce worktop-build/debian-worktop-13-live.iso.
+## 💻 Installation & Usage
 
-Install on Hardware:
+### 1. Boot the Live USB
+Flash the freshly built ISO to a USB drive using `dd` or Rufus. Boot your machine from the USB. The system will copy itself to RAM (`toram`) during the splash screen, leaving your USB drive completely idle afterward.
 
-Flash the ISO to a USB stick.
-Boot the USB.
-Login as root (password: worktop) or ebram (password: worktop).
-Run the installer: 1 sudo debian-worktop-installer
-Follow the prompts to partition your disk (you can customize sizes) and set your LUKS password.
-Maintenance:
+### 2. Fast Clone to Local Disk
+If you want to install this system onto your local hard drive natively:
+1. Open Terminal.
+2. Run the installer:
+   ```bash
+   sudo install-worktop
+   ```
+3. Follow the prompts to select your target disk, confirm the wipe, set up your root partition size, and establish your LUKS encryption password for persistence.
 
-Boot into "Debian Base" to install updates or new kernels.
-Run sudo update-toram to apply those changes to the Live system.
-Reboot into "Debian Toram" to use the updated, high-performance environment.
+### 3. Using Persistent Storage
+The system intelligently separates the **Immutable Base System** (mounted read-only) from your **Personal Overlay** (mounted read-write in RAM). 
+
+In the background, a `systemd` service (`worktop-sync-engine`) reliably synchronizes your modifications down to the `WORKTOP_PERSIST` partition every 5 minutes. No manual intervention is required. 
+
+### 4. Updating the Base OS
+Should you perform major `apt upgrade` updates or install new system-level software that you want to keep permanently fused to the read-only layer:
+1. Make your changes or installations on the running system.
+2. Execute the base updater:
+   ```bash
+   sudo update-worktop
+   ```
+This command seamlessly repacks your live system down to the GRUB boot partition and intelligently schedules the persistent overlay to physically wipe itself on your next shutdown. Reboot, and you are running entirely off the newly optimized base!
