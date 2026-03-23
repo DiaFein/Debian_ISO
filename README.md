@@ -1,5 +1,5 @@
 # Debian Worktop ISO Builder
-### `Debian-toram-v3.sh` — Version 3 (Stable)
+### `Debian-toram-v5.2.sh` — Version 5.2 (Stable)
 
 A single-script builder that produces a minimal **Debian Trixie (13)** GNOME Live ISO with:
 - **Toram mode** — the entire squashfs is loaded into RAM at boot for maximum I/O performance
